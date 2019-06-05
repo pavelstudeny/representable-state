@@ -92,13 +92,19 @@ function defState(__enum__) {
                     if (this._transitions) {
                         if (typeof this._state === 'undefined') {
                             if (!this._transitions.some(transitionArray => transitionArray[0] === type)) {
-                                throw new Error('Illegal transition: ' + typeName(this._state) + ' -> ' + typeName(val));
+                                if (!this._default) {
+                                    throw new Error('Illegal transition: ' + typeName(this._state) + ' -> ' + typeName(val));
+                                }
+                                return this.set(this._default);
                             }
                         }
                         else {
                             const currentType = getType(this._state).get();
                             if (!this._transitions.some(transitionArray => transitionArray.slice(1).some((t, i) => t === type && currentType === transitionArray[i]))) {
-                                throw new Error('Illegal transition: ' + typeName(this._state) + ' -> ' + typeName(val));
+                                if (!this._default) {
+                                    throw new Error('Illegal transition: ' + typeName(this._state) + ' -> ' + typeName(val));
+                                }
+                                return this.set(this._default);
                             }
                         }
                     }
