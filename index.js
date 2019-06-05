@@ -106,7 +106,12 @@ function defState(__enum__) {
                     this._state = val;
                     return this;
                 })
-                .else(name => { throw new Error('Illegal argument: ' + name); });
+                .else(name => {
+                    if (!this._default) {
+                        throw new Error('Illegal argument: ' + name);
+                    }
+                    return this.set(this._default);
+                });
         }
 
         update(val) {
@@ -130,6 +135,11 @@ function defState(__enum__) {
 
         static transitions(__arrays__) {
             this.prototype._transitions = Array.prototype.slice.call(arguments);
+            return this;
+        }
+
+        static withDefault(defaultValue) {
+            this.prototype._default = defaultValue;
             return this;
         }
     }
@@ -202,7 +212,7 @@ LoggedIn
 (function () {
 
 const LoggedOutRoutes = defState('logout', 'login', 'home');
-const LoggedInRoutes = defState('report', 'home');
+const LoggedInRoutes = defState('report', 'home').withDefault('home');
 
 class LoggedOutState extends StateType {
     constructor(val) {
@@ -239,12 +249,8 @@ store.update({ route: 'home' });
 console.log(store.map(s => s));
 console.log(store.map(route));
 
-try {
-    store.update({ route: 'login' });
-    console.log('this should have thrown');
-}
-catch(ex) {
-    console.log(ex);
-}
+store.update({ route: 'login' });
+console.log(store.map(s => s));
+console.log(store.map(route));  // goes to default 'home'
 
 })();
