@@ -57,7 +57,7 @@ Examples
 
 ```
 const ReadyState = defState('unloaded', 'loading', 'complete');
-let readyState = new ReadState('unloaded');
+let readyState = new ReadyState('unloaded');
 ...
 readyState.set('loading');
 readyState.set('void');  // this throws an error
