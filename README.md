@@ -41,7 +41,7 @@ Open questions:
 Implementation
 --------------
 
-Except for update recursion, StateType just stores a value passed to constructor and provides it bback via a `map`
+Except for update recursion, StateType just stores a value passed to constructor and provides it back via a `map`
 method ( `const value = StateType.map(function (v) { return v; })` ).
 
 Open questions:
