@@ -71,6 +71,10 @@ class HttpError extends StateType {}
 const HttpStatus = defState(HttpOk, HttpRedirect, HttpError);
 ...
 let httpResult = new HttpStatus(new HttpRedirect({ code: 303, redirectUrl = 'http://see.other.com' }));
+...
+if (httpResult.is(HttpRedirect)) {
+    startRedirect( httpResult.map(x => x.redirectUrl) );
+}
 ```
 
 

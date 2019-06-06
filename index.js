@@ -86,6 +86,19 @@ function defState(__enum__) {
             return f(this._state);
         }
 
+        is(val) {
+            if (this._state instanceof StateType) {
+                return this._state instanceof val;
+            }
+            return this._state === val;
+        }
+
+        enum() {
+            return enums.find(e => {
+                return e === this._state || (e.prototype instanceof StateType && this._state instanceof e)
+            });
+        }
+
         set(val) {
             return getType(val)
                 .then(type => {

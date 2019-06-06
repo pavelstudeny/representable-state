@@ -56,6 +56,43 @@ describe('RState', function () {
         expect(function () { state.set(new ErrorState('loading failed')) }).toThrow();
     });
 
+    it('compares value', function () {
+        class OKState extends StateType {}
+        class ErrorState extends StateType {}
+        class ExceptionState extends StateType {}
+        class RandomClass {}
+
+        const State = defState('loading', OKState, ErrorState);
+
+        let state = new State('loading');
+
+        expect(state.is('loading')).toBe(true);
+
+        state.set(new OKState('ok'));
+
+        expect(state.is(OKState)).toBe(true);
+        expect(state.is(ErrorState)).toBe(false);
+        expect(state.is(ExceptionState)).toBe(false);
+        expect(state.is(RandomClass)).toBe(false);
+    });
+
+    it('can be passed to a switch statement', function () {
+        class OKState extends StateType {}
+        class ErrorState extends StateType {}
+
+        const State = defState('loading', OKState, ErrorState);
+
+        state = new State(new OKState('ok'));
+
+        switch (state.enum()) {
+            case 'loading': fail('value should be OKState'); break;
+            case OKState: break;
+            case ErrorState: fail('value should be OKState'); break;
+            default: fail('value should be OKState'); break;
+        }
+    })
+
+
     describe('transitions', function () {
         it('reject a valid value if such a transition is invalid', function () {
             const State = defState('loading', 'loaded', 'unloading').transitions(['loading', 'loaded', 'unloading'], ['loaded', 'unloading']);
