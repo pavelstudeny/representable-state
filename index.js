@@ -102,23 +102,28 @@ function defState(__enum__) {
         set(val) {
             return getType(val)
                 .then(type => {
-                    if (this._transitions) {
-                        if (typeof this._state === 'undefined') {
-                            if (!this._transitions.some(transitionArray => transitionArray[0] === type)) {
-                                if (!this._default) {
-                                    throw new Error('Illegal transition: ' + typeName(this._state) + ' -> ' + typeName(val));
-                                }
-                                return this.set(this._default);
+                    if (typeof this._state === 'undefined' && this._transitions && this._transitions.initial) {
+                        if (this._transitions.initial.indexOf(type) == -1) {
+                            if (!this._default || val === this._default) {
+                                throw new Error('Illegal transition: ' + typeName(this._state) + ' -> ' + typeName(val));
                             }
+                            return this.set(this._default);
+                        }
+                    }
+                    if (typeof this._state !== 'undefined' && this._transitions && this._transitions.map) {
+                        let currentType = getType(this._state).get();
+                        if (typeof currentType !== 'function') {
+                            currentType = currentType.toString();
                         }
                         else {
-                            const currentType = getType(this._state).get();
-                            if (!this._transitions.some(transitionArray => transitionArray.slice(1).some((t, i) => t === type && currentType === transitionArray[i]))) {
-                                if (!this._default) {
-                                    throw new Error('Illegal transition: ' + typeName(this._state) + ' -> ' + typeName(val));
-                                }
-                                return this.set(this._default);
+                            currentType = currentType.name;
+                        }
+
+                        if (this._transitions.map[currentType].indexOf(type) == -1) {
+                            if (!this._default || val === this._default) {
+                                throw new Error('Illegal transition: ' + typeName(this._state) + ' -> ' + typeName(val));
                             }
+                            return this.set(this._default);
                         }
                     }
         
@@ -152,8 +157,8 @@ function defState(__enum__) {
             return this;
         }
 
-        static transitions(__arrays__) {
-            this.prototype._transitions = Array.prototype.slice.call(arguments);
+        static transitions(transition_map, initial_array) {
+            this.prototype._transitions = { initial: initial_array, map: transition_map };
             return this;
         }
 

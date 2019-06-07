@@ -95,7 +95,10 @@ describe('RState', function () {
 
     describe('transitions', function () {
         it('reject a valid value if such a transition is invalid', function () {
-            const State = defState('loading', 'loaded', 'unloading').transitions(['loading', 'loaded', 'unloading'], ['loaded', 'unloading']);
+            const State = defState('loading', 'loaded', 'unloading').transitions({
+                'loading': [ 'loaded' ],
+                'loaded': [ 'unloading' ]
+            });
 
             let state = new State('loaded');
 
@@ -103,6 +106,68 @@ describe('RState', function () {
             expect(state.map(x => x)).toBe('unloading');
 
             expect(function () { state.set('loading') }).toThrow();
+        });
+
+        it('work for StateTypes', function () {
+            class OKState extends StateType {}
+            class ErrorState extends StateType {}
+            class ExceptionState extends StateType {}
+    
+            const State = defState(OKState, ErrorState, ExceptionState).transitions({
+                OKState: [ ErrorState, ExceptionState ],
+                ErrorState: [ OKState, ExceptionState ]
+            });
+
+            let state = new State(new OKState(200));
+
+            expect(function () {
+                state.set(new ExceptionState(new Error('unrecoverable error')));
+            }).not.toThrow();
+            expect(state.map(x => x.message)).toBe('unrecoverable error');
+
+            expect(function () {
+                state.set(new ErrorState(500));
+            }).toThrow();
+            expect(state.is(ExceptionState));
+        });
+
+        it('work for numbers', function () {
+            const State = defState(1, 2, 3).transitions({
+                1: [ 2, 3 ],
+                2: [ 1, 3 ]
+            });
+
+            let state = new State(1);
+
+            expect(function () {
+                state.set(3);
+            }).not.toThrow();
+            expect(state.map(x => x)).toBe(3);
+
+            expect(function () {
+                state.set(2);
+            }).toThrow();
+            expect(state.is(3));
+        });
+
+        it('reject invalid initial state', function () {
+            const State = defState(1, 2, 3).transitions({
+                1: [ 2, 3 ]
+            }, [ 1, 2 ]).withDefault(1);
+
+            let state = new State(3);
+
+            expect(state.is(1));
+        });
+
+        it('throw on an invalid transition to the default state', function () {
+            const State = defState(1, 2, 3).transitions({
+                1: [ 2, 3 ]
+            }, [ 2 ]).withDefault(1);
+
+            expect(function () {
+                new State(3);
+            }).toThrow();
         });
     })
 });
