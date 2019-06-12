@@ -7,7 +7,34 @@ describe('RState', function () {
         let state = new State('loading');
         state.set('loaded');
 
-        expect(state.map(x => x)).toBe('loaded');
+        expect(state.get()).toBe('loaded');
+    });
+
+    it('collects the selected value', function () {
+        const State = defState('loading', 'loaded', 'unloading')
+
+        let state = new State('loaded');
+        const collector = state
+          .on('loading', function () { fail('loading visitor should not have been called'); })
+          .on('loaded', x => 'visited')
+          .on('unloading', function () { fail('unloading visitor should not have been called'); })
+
+
+        expect(collector.collect()).toBe('visited');
+    });
+
+    it('collects the default value if nothing is selected', function () {
+        const State = defState('loading', 'loaded', 'unloading')
+
+        let state = new State('loaded');
+
+        expect(state.collect('predef')).toBe('predef');
+
+        expect(state
+          .on('loading', function () { fail('loading visitor should not have been called'); })
+          .on('unloading', function () { fail('unloading visitor should not have been called'); })
+          .collect('postdef')
+        ).toBe('postdef');
     });
 
     it('works with a combinantion of plain values and StateTypes (enums with a value)', function () {
@@ -19,7 +46,7 @@ describe('RState', function () {
         let state = new State('loading');
         state.set(new OKState('all good'));
 
-        expect(state.map(x => x)).toBe('all good');
+        expect(state.get()).toBe(OKState);
     });
 
     it('does not interfere with states of another RState', function () {
@@ -30,7 +57,7 @@ describe('RState', function () {
         let otherState = new OtherState('loading');
 
         state.set('loaded');
-        expect(state.map(x => x)).toBe('loaded');
+        expect(state.get()).toBe('loaded');
 
         expect(function () { otherState.set('loaded') }).toThrow();
     });
@@ -80,14 +107,20 @@ describe('RState', function () {
         class OKState extends StateType {}
         class ErrorState extends StateType {}
 
-        const State = defState('loading', OKState, ErrorState);
+        const State = defState('loading', OKState, ErrorState, 1);
 
         state = new State(new OKState('ok'));
 
-        switch (state.enum()) {
+        switch (state.get()) {
             case 'loading': fail('value should be OKState'); break;
             case OKState: break;
             case ErrorState: fail('value should be OKState'); break;
+            default: fail('value should be OKState'); break;
+        }
+
+        state.set(1);
+        switch (state.get()) {
+            case 1: break;
             default: fail('value should be OKState'); break;
         }
     })
@@ -103,7 +136,7 @@ describe('RState', function () {
             let state = new State('loaded');
 
             expect(function () { state.set('unloading') }).not.toThrow();
-            expect(state.map(x => x)).toBe('unloading');
+            expect(state.is('unloading')).toBe(true);
 
             expect(function () { state.set('loading') }).toThrow();
         });
@@ -123,7 +156,7 @@ describe('RState', function () {
             expect(function () {
                 state.set(new ExceptionState(new Error('unrecoverable error')));
             }).not.toThrow();
-            expect(state.map(x => x.message)).toBe('unrecoverable error');
+            expect(state.on(ExceptionState, x => x.message).collect()).toBe('unrecoverable error');
 
             expect(function () {
                 state.set(new ErrorState(500));
@@ -142,7 +175,7 @@ describe('RState', function () {
             expect(function () {
                 state.set(3);
             }).not.toThrow();
-            expect(state.map(x => x)).toBe(3);
+            expect(state.get()).toBe(3);
 
             expect(function () {
                 state.set(2);

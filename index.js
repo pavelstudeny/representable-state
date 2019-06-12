@@ -2,8 +2,8 @@ class StateType {
     constructor(value) {
         this._value = value;
     }
-    map(f) {
-        return f(this._value);
+    value() {
+        return this._value;
     }
     update(val) {
         if (val !== null && typeof val !== 'object') {
@@ -79,11 +79,26 @@ function defState(__enum__) {
             this.set(val_or_func);
         }
 
-        map(f) {
-            if (this._state instanceof StateType) {
-                return this._state.map(f);
+        on(val, f) {
+            if (arguments.length != 2) {
+                throw new Error('Invalid arguments: ' + Array.prototype.join.call(arguments, ', '));
             }
-            return f(this._state);
+            if (!this.is(val)) {
+                return this;
+            }
+            const value = f(this._state instanceof StateType ? this._state.value() : this._state);
+            return Object.assign({}, this, {
+                on: function () {
+                    return this;
+                },
+                collect: function() {
+                    return value;
+                }
+            });
+        }
+
+        collect(defaultValue) {
+            return defaultValue;
         }
 
         is(val) {
@@ -93,7 +108,7 @@ function defState(__enum__) {
             return this._state === val;
         }
 
-        enum() {
+        get() {
             return enums.find(e => {
                 return e === this._state || (e.prototype instanceof StateType && this._state instanceof e)
             });

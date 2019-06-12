@@ -47,6 +47,7 @@ method ( `const value = StateType.map(function (v) { return v; })` ).
 **Open questions**:
 
 * do we want a simple `get()` method in addition to _map_ or even remove _map_ and provide just _get_?
+   * attempt 1: refactor `map()` to `on(state, function)` and `get()` that returns the state type
 
 RState is a class defined inside a `defState(...)` function scope, so that the straight values and StateType
 subtypes are kept in the function's closure. When a value is set, RState checks that it is either
