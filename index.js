@@ -181,6 +181,10 @@ function defState(__enum__) {
       this.prototype._default = defaultValue;
       return this;
     }
+
+    static create(initialValue) {
+      return new this(initialValue);
+    }
   }
   return RState;
 }

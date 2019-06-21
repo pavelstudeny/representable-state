@@ -23,6 +23,11 @@ describe('RState', function () {
         expect(collector.collect()).toBe('visited');
     });
 
+    it('creates instance', function () {
+        let state = defState('a', 'b', 3).withDefault(3).create();
+        expect(state.is(3)).toBe(true);
+    });
+
     it('collects the default value if nothing is selected', function () {
         const State = defState('loading', 'loaded', 'unloading')
 
