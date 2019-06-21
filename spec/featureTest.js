@@ -214,7 +214,7 @@ describe('RState', function () {
             const s1 = defState(2, 4, 6, 8).withDefault(6).create(2);
             const s2 = defState(1, 2, 3, 4).withDefault(3).create(2);
 
-            const intersection = intersectState({ s1, s2 }).withDefault(4);
+            const intersection = intersectState({ s1, s2 }).withDefault(4).create();
             intersection.set(10);
             expect(intersection.get()).toBe(4);
         });
@@ -224,9 +224,30 @@ describe('RState', function () {
             const s12 = defState(2, 4, 8).create(4);
             const s2 = defState(1, 2, 3, 4).withDefault(3).create(2);
 
-            const intersection = intersectState({ s1: s11, s2 });
+            const intersection = intersectState({ s1: s11, s2 }).create();
             intersection.reset({ s1: s12 });
             expect(intersection.get()).toBe(4);
+        });
+
+        it('emits changes', function () {
+            const s1 = defState(2, 4, 6, 8).create(2);
+            const s2 = defState(1, 2, 3, 4).create(2);
+
+            let onChange = jasmine.createSpy('change');
+            const intersection = intersectState({ s1, s2 }).create();
+
+            let unsubscribe = intersection.subscribe(onChange);
+
+            intersection.set(4);
+
+            expect(onChange).toHaveBeenCalledWith(4);
+            expect(onChange.calls.count()).toBe(1);
+
+            unsubscribe();
+
+            intersection.set(2);
+
+            expect(onChange.calls.count()).toBe(1);
         });
     });
 });

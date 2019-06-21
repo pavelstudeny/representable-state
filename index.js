@@ -1,3 +1,5 @@
+const EventEmitter = require('events');
+
 class StateType {
   constructor(value) {
     this._value = value;
@@ -198,15 +200,18 @@ function intersectState(statesMap) {
     }
   });
 
-  return {
-    _states: Object.assign({}, statesMap),
-    _first: Object.keys(statesMap)[0],
+  class StateIntersection extends EventEmitter {
+    constructor(statesMap) {
+      super();
+      this._states = Object.assign({}, statesMap);
+      this._first = Object.keys(statesMap)[0];
+    }
 
-    get: function () {
+    get () {
       return this._states[this._first].get();
-    },
+    }
 
-    set: function (value) {
+    set (value) {
       const maxAttempts = Object.keys(this._states).length + 1;
       let val = value;
       let change = false;
@@ -221,13 +226,14 @@ function intersectState(statesMap) {
         }
 
         if (!change) {
+          this.emit('change', val);
           return this;
         }
 
         change = false;
       }
 
-      if (!Object.getOwnPropertyDescriptor(this, '_default')) {
+      if (typeof this._default === 'undefined') {
         throw new Error('Mutually acceptable state does not exist for ' + JSON.stringify(value, 2, null));
       }
 
@@ -238,21 +244,33 @@ function intersectState(statesMap) {
         }
       }
 
+      this.emit('change', this._default);
       return this;
-    },
+    }
 
-    reset: function (value) {
+    reset (value) {
       // assert Object.keys(value).length == 1
       const key = Object.keys(value)[0];
       this._states[key] = value[key];
       return this.set(value[key].when(value[key].get()).collect());
-    },
+    }
 
-    withDefault: function (value) {
-      this._default = value;
+    subscribe (callback) {
+      this.addListener('change', callback);
+      return () => this.removeListener('change', callback);
+    }
+
+    static withDefault(defaultValue) {
+      this.prototype._default = defaultValue;
       return this;
     }
+
+    static create() {
+      return new this(statesMap);
+    }
   };
+
+  return StateIntersection;
 }
 
 module.exports = { StateType, defState, intersectState };
