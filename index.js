@@ -193,13 +193,6 @@ function defState(__enum__) {
 }
 
 function intersectState(statesMap) {
-  const [ first, ...rest ] = Object.keys(statesMap);
-  rest.forEach(r => {
-    if (!statesMap[r].is(statesMap[first].get())) {
-      throw new Error('inconsistent initial state');
-    }
-  });
-
   class StateIntersection extends EventEmitter {
     constructor(statesMap) {
       super();
@@ -265,8 +258,23 @@ function intersectState(statesMap) {
       return this;
     }
 
-    static create() {
-      return new this(statesMap);
+    static create(newValue) {
+      if (arguments.length == 0) {
+        const [ first, ...rest ] = Object.keys(statesMap);
+        rest.forEach(r => {
+          if (!statesMap[r].is(statesMap[first].get())) {
+            throw new Error('inconsistent initial state');
+          }
+        });
+      }
+
+      let instance = new this(statesMap);
+
+      if (arguments.length != 0) {
+        instance.set(newValue);
+      }
+
+      return instance;
     }
   };
 

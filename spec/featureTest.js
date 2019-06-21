@@ -219,6 +219,14 @@ describe('RState', function () {
             expect(intersection.get()).toBe(4);
         });
 
+        it('adjust a common value in create', function () {
+            const s1 = defState(2, 4, 6, 8).create(6);
+            const s2 = defState(1, 2, 3, 4).create(1);
+
+            const intersection = intersectState({ s1, s2 }).create(2);
+            expect(intersection.get()).toBe(2);
+        });
+
         it('resets to a new value set', function () {
             const s11 = defState(2, 4, 6, 8).withDefault(6).create(2);
             const s12 = defState(2, 4, 8).create(4);
