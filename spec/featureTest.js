@@ -1,4 +1,4 @@
-const { StateType, defState } = require('../index.js');
+const { StateType, defState, intersectState } = require('../index.js');
 
 describe('RState', function () {
     it('works with plain values', function () {
@@ -207,5 +207,26 @@ describe('RState', function () {
                 new State(3);
             }).toThrow();
         });
-    })
+    });
+
+    describe('intersectState', function () {
+        it('iterates to a common value', function () {
+            const s1 = defState(2, 4, 6, 8).withDefault(6).create(2);
+            const s2 = defState(1, 2, 3, 4).withDefault(3).create(2);
+
+            const intersection = intersectState({ s1, s2 }).withDefault(4);
+            intersection.set(10);
+            expect(intersection.get()).toBe(4);
+        });
+
+        it('resets to a new value set', function () {
+            const s11 = defState(2, 4, 6, 8).withDefault(6).create(2);
+            const s12 = defState(2, 4, 8).create(4);
+            const s2 = defState(1, 2, 3, 4).withDefault(3).create(2);
+
+            const intersection = intersectState({ s1: s11, s2 });
+            intersection.reset({ s1: s12 });
+            expect(intersection.get()).toBe(4);
+        });
+    });
 });

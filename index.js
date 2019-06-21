@@ -80,13 +80,14 @@ function defState(__enum__) {
     }
 
     on(val, f) {
-      if (arguments.length != 2) {
+      if (arguments.length != 2 && arguments.length != 1) {
         throw new Error('Invalid arguments: ' + Array.prototype.join.call(arguments, ', '));
       }
       if (!this.is(val)) {
         return this;
       }
-      const value = f(this._state instanceof StateType ? this._state.value() : this._state);
+      const stateValue = this._state instanceof StateType ? this._state.value() : this._state;
+      const value = f ? f(stateValue) : stateValue;
       return Object.assign({}, this, {
         on: function () {
           return this;
@@ -189,5 +190,70 @@ function defState(__enum__) {
   return RState;
 }
 
-module.exports = { StateType, defState };
+function intersectState(statesMap) {
+  const [ first, ...rest ] = Object.keys(statesMap);
+  rest.forEach(r => {
+    if (!statesMap[r].is(statesMap[first].get())) {
+      throw new Error('inconsistent initial state');
+    }
+  });
+
+  return {
+    _states: Object.assign({}, statesMap),
+    _first: Object.keys(statesMap)[0],
+
+    get: function () {
+      return this._states[this._first].get();
+    },
+
+    set: function (value) {
+      const maxAttempts = Object.keys(this._states).length + 1;
+      let val = value;
+      let change = false;
+      for (let i = 0; i < maxAttempts; ++i) {
+        for (let key in this._states) {
+          this._states[key].set(val);
+          if (!this._states[key].is(val)) {
+            val = this._states[key].on(this._states[key].get()).collect();
+            change = true;
+            break;
+          }
+        }
+
+        if (!change) {
+          return this;
+        }
+
+        change = false;
+      }
+
+      if (!Object.getOwnPropertyDescriptor(this, '_default')) {
+        throw new Error('Mutually acceptable state does not exist for ' + JSON.stringify(value, 2, null));
+      }
+
+      for (let key in this._states) {
+        this._states[key].set(this._default);
+        if (!this._states[key].is(this._default)) {
+          throw new Error('Default invalid for ' + key);
+        }
+      }
+
+      return this;
+    },
+
+    reset: function (value) {
+      // assert Object.keys(value).length == 1
+      const key = Object.keys(value)[0];
+      this._states[key] = value[key];
+      return this.set(value[key].on(value[key].get()).collect());
+    },
+
+    withDefault: function (value) {
+      this._default = value;
+      return this;
+    }
+  };
+}
+
+module.exports = { StateType, defState, intersectState };
 
