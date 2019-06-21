@@ -15,9 +15,9 @@ describe('RState', function () {
 
         let state = new State('loaded');
         const collector = state
-          .on('loading', function () { fail('loading visitor should not have been called'); })
-          .on('loaded', x => 'visited')
-          .on('unloading', function () { fail('unloading visitor should not have been called'); })
+          .when('loading', function () { fail('loading visitor should not have been called'); })
+          .when('loaded', x => 'visited')
+          .when('unloading', function () { fail('unloading visitor should not have been called'); })
 
 
         expect(collector.collect()).toBe('visited');
@@ -36,8 +36,8 @@ describe('RState', function () {
         expect(state.collect('predef')).toBe('predef');
 
         expect(state
-          .on('loading', function () { fail('loading visitor should not have been called'); })
-          .on('unloading', function () { fail('unloading visitor should not have been called'); })
+          .when('loading', function () { fail('loading visitor should not have been called'); })
+          .when('unloading', function () { fail('unloading visitor should not have been called'); })
           .collect('postdef')
         ).toBe('postdef');
     });
@@ -161,7 +161,7 @@ describe('RState', function () {
             expect(function () {
                 state.set(new ExceptionState(new Error('unrecoverable error')));
             }).not.toThrow();
-            expect(state.on(ExceptionState, x => x.message).collect()).toBe('unrecoverable error');
+            expect(state.when(ExceptionState, x => x.message).collect()).toBe('unrecoverable error');
 
             expect(function () {
                 state.set(new ErrorState(500));
@@ -198,7 +198,7 @@ describe('RState', function () {
             expect(state.is(1));
         });
 
-        it('throw on an invalid transition to the default state', function () {
+        it('throw when an invalid transition to the default state', function () {
             const State = defState(1, 2, 3).transitions({
                 1: [ 2, 3 ]
             }, [ 2 ]).withDefault(1);

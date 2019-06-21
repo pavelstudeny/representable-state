@@ -41,15 +41,15 @@ describe('nested RState', function () {
     it('StateType may contain an RState as a value', function () {
         let store = new Store(new LoggedOutState({ route: 'home'}));
 
-        store.on(LoggedInState, function () { fail('LoggedInState callback should not be called in LoggedOutState'); } );
+        store.when(LoggedInState, function () { fail('LoggedInState callback should not be called in LoggedOutState'); } );
 
         const onLoggedOutState = jasmine.createSpy('onLoggedOutState').and.callFake(function (x) {
             expect(x).toEqual({ route: jasmine.anything() });
         });
-        store.on(LoggedOutState, onLoggedOutState);
+        store.when(LoggedOutState, onLoggedOutState);
         expect(onLoggedOutState).toHaveBeenCalled();
 
-        expect(store.on(LoggedOutState, route).collect('')).toBe('home');
+        expect(store.when(LoggedOutState, route).collect('')).toBe('home');
     });
 
     it('switches between valid values', function () {
@@ -57,8 +57,8 @@ describe('nested RState', function () {
 
         store.set(new LoggedInState({ token: 'DEADBEEF', route: 'report' }));
 
-        expect(store.on(LoggedInState, s => s.token).collect()).toBe('DEADBEEF');
-        expect(store.on(LoggedInState, route).collect()).toBe('report');
+        expect(store.when(LoggedInState, s => s.token).collect()).toBe('DEADBEEF');
+        expect(store.when(LoggedInState, route).collect()).toBe('report');
     });
 
     it('updates partial values', function () {
@@ -66,8 +66,8 @@ describe('nested RState', function () {
 
         store.update({ route: 'home' });
 
-        expect(store.on(LoggedInState, s => s.token).collect()).toBe('DEADBEEF');
-        expect(store.on(LoggedInState, route).collect()).toBe('home');
+        expect(store.when(LoggedInState, s => s.token).collect()).toBe('DEADBEEF');
+        expect(store.when(LoggedInState, route).collect()).toBe('home');
     });
 
     it('moves to the default value instead of throwing an exception', function () {
@@ -75,7 +75,7 @@ describe('nested RState', function () {
 
         store.update({ route: 'login' });
 
-        expect(store.on(LoggedInState, s => s.token).collect()).toBe('DEADBEEF');
-        expect(store.on(LoggedInState, route).collect()).toBe('home');
+        expect(store.when(LoggedInState, s => s.token).collect()).toBe('DEADBEEF');
+        expect(store.when(LoggedInState, route).collect()).toBe('home');
     });
 });

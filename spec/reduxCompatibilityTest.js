@@ -34,7 +34,7 @@ describe('representable-state with Redux', function () {
             return state;
         }, new State(new LoggedOutState()));
 
-        expect(store.getState().on(LoggedOutState, route).collect()).toBe('login');
+        expect(store.getState().when(LoggedOutState, route).collect()).toBe('login');
     });
 
     it('reduces actions', function () {
@@ -52,7 +52,7 @@ describe('representable-state with Redux', function () {
             route: 'home'
         });
 
-        expect(store.getState().on(LoggedOutState, route).collect()).toBe('home');
+        expect(store.getState().when(LoggedOutState, route).collect()).toBe('home');
     });
 
     it('reduces invalid actions to defaults', function () {
@@ -74,7 +74,7 @@ describe('representable-state with Redux', function () {
             route: 'report'  // invalid
         });
 
-        expect(store.getState().on(LoggedOutState, route).collect()).toBe('login');
+        expect(store.getState().when(LoggedOutState, route).collect()).toBe('login');
     });
 
     it('is reactive', function () {
@@ -88,7 +88,7 @@ describe('representable-state with Redux', function () {
         }, new State(new LoggedOutState()));
 
         let handleChange = jasmine.createSpy('handleChange').and.callFake(function () {
-            expect(store.getState().on(LoggedOutState, route).collect()).toBe('home');
+            expect(store.getState().when(LoggedOutState, route).collect()).toBe('home');
         });
 
         store.subscribe(handleChange);

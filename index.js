@@ -79,7 +79,7 @@ function defState(__enum__) {
       this.set(val_or_func);
     }
 
-    on(val, f) {
+    when(val, f) {
       if (arguments.length != 2 && arguments.length != 1) {
         throw new Error('Invalid arguments: ' + Array.prototype.join.call(arguments, ', '));
       }
@@ -89,7 +89,7 @@ function defState(__enum__) {
       const stateValue = this._state instanceof StateType ? this._state.value() : this._state;
       const value = f ? f(stateValue) : stateValue;
       return Object.assign({}, this, {
-        on: function () {
+        when: function () {
           return this;
         },
         collect: function () {
@@ -214,7 +214,7 @@ function intersectState(statesMap) {
         for (let key in this._states) {
           this._states[key].set(val);
           if (!this._states[key].is(val)) {
-            val = this._states[key].on(this._states[key].get()).collect();
+            val = this._states[key].when(this._states[key].get()).collect();
             change = true;
             break;
           }
@@ -245,7 +245,7 @@ function intersectState(statesMap) {
       // assert Object.keys(value).length == 1
       const key = Object.keys(value)[0];
       this._states[key] = value[key];
-      return this.set(value[key].on(value[key].get()).collect());
+      return this.set(value[key].when(value[key].get()).collect());
     },
 
     withDefault: function (value) {
