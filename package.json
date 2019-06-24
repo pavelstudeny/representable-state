@@ -12,12 +12,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/pavelstudeny/representable-state.git"
+    "url": "git+https://github.com/avast/representable-state.git"
   },
   "author": "",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/pavelstudeny/representable-state/issues"
+    "url": "https://github.com/avast/representable-state/issues"
   },
-  "homepage": "https://github.com/pavelstudeny/representable-state#readme"
+  "homepage": "https://github.com/avast/representable-state#readme"
 }
