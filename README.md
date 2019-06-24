@@ -1,5 +1,8 @@
-DRAFT: Make Illegal States Unrepresentable
-==========================================
+Make Illegal States Unrepresentable in JavaScript
+=================================================
+
+Set and get your state safely, with declarative constraints
+-----------------------------------------------------------
 
 Some languages provide support for unions or enums with a value,
 that allow to always represent a state consistently.
@@ -15,21 +18,10 @@ Plain enums are represented by arbitrary constants, such as strings or numbers,
 while enums with values are represented by a special class, StateType,
 that holds a value.
 
-**Open questions**:
-
-* should it be possible for the plain enum to be an object?
-   * probably not - what would happen if a property of the object is modified?
-* is StateType necessary?
-   * A nested RState could be used directly, but that would require an option for an arbitrary value (such as a username), which is what RState aims to prevent
-
 What should happen when an incorrect value is set? Typed languages would prohibit such thing in compile time.
 RState detects this in runtime. In such cases, it throws an exception that the calling layer needs to handle.
 This might be beneficial in come cases, but often it can be a burden. This is solved by an optional
 default value to switch (and no exception is thrown).
-
-**Open questions**:
-
-* do we want an option not to throw and stay silently at the last valid value?
 
 In cases like finite automatons, a transition from a valid state to another valid state may be invalid.
 Transition validity may be solved by an optional list of transitions from a value to other values.
@@ -38,20 +30,26 @@ Transition validity may be solved by an optional list of transitions from a valu
 
 * does anybody want that?
 
-Implementation
---------------
+API
+---
 
-Except for update recursion, StateType just stores a value passed to constructor and provides it back via a `map`
-method ( `const value = StateType.map(function (v) { return v; })` ).
+RState is a class defined inside a `defState(...)` function scope.
 
-**Open questions**:
+**`get`** returns the current _state_
 
-* do we want a simple `get()` method in addition to _map_ or even remove _map_ and provide just _get_?
-   * attempt 1: refactor `map()` to `when(state, function)` and `get()` that returns the state type
+**`is`** checks whether RState is in a desired _state_
 
-RState is a class defined inside a `defState(...)` function scope, so that the straight values and StateType
-subtypes are kept in the function's closure. When a value is set, RState checks that it is either
-one of the straight values or a StateType instance.
+**`when`** calls a callback if RState is in a desired _state_ and passes the state _value_ to the callback
+
+**`collect`** returns the value returned by `when` callback
+
+**`set`** changes the current _state_
+
+**`update`** updates the current _state_ _value_
+
+
+Except for update recursion, StateType just stores a value passed to constructor and provides it back via a `value()`.
+
 
 Examples
 --------
@@ -73,13 +71,56 @@ const HttpStatus = defState(HttpOk, HttpRedirect, HttpError);
 ...
 let httpResult = new HttpStatus(new HttpRedirect({ code: 303, redirectUrl = 'http://see.other.com' }));
 ...
+
+function httpStatusCode(v) { return v.code }
+
+const resultCode = httpResult
+    .when(HttpOk, httpStatusCode)        // success status
+    .when(HttpRedirect, httpStatusCode)  // redirect status
+    .collect('error');                   // 'error' is the default if none of the whens triggered
+
+console.log('Result:', resultCode);
+
 if (httpResult.is(HttpRedirect)) {
     startRedirect( httpResult.map(x => x.redirectUrl) );
 }
 ```
 
+Multiple constraints
+--------------------
 
-Other goals
+Let's assume a case where you are allowed to view certain sets of pages based on:
+
+* whether you have an active subscription
+* whether you have any friends
+
+in an imaginary chat app. The enum-value concept does not help here.
+
+`intersectState` allows multiple RState instances to sync on _states_ they have in common.
+
+Example
+-------
+
+```
+const unsubscribedRoutes = defState('subscribe', 'profile').create();
+const subscribedRoutes   = defState('friends', 'chat', 'profile').create();
+
+const friendsRoutes      = defState('subscribe', 'profile', 'chat', 'friends').create();
+const noFriendsRoutes    = defState('subscribe', 'profile').create();
+
+const validRoutes = intersectState({
+   subscription: subscribed ? subscribedRoutes : unsubscribedRoutes,
+   friends: friends.count() > 0 ? friendsRoutes : noFriendsRoutes
+}).create('profile');
+
+validRoutes.subscribe(state => console.log('Navigated to:', state));
+
+unsubscribedRoutes.set('subscribe');
+...
+validRoutes.reset({ subscription: subscribedRoutes });
+```
+
+Other features
 -----------
 
-Should be usable with Redux / Vuex / ....
+Usable with Redux / Vuex / ....
