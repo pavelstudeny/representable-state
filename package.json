@@ -1,6 +1,6 @@
 {
   "name": "representable-state",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Make Illegal States Unrepresentable",
   "main": "index.js",
   "devDependencies": {

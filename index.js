@@ -241,11 +241,12 @@ function intersectState(statesMap) {
       return this;
     }
 
-    reset (value) {
+    reset (rstate, opt_value) {
       // assert Object.keys(value).length == 1
-      const key = Object.keys(value)[0];
-      this._states[key] = value[key];
-      return this.set(value[key].when(value[key].get()).collect());
+      const key = Object.keys(rstate)[0];
+      const currentValue = arguments.length > 1 ? opt_value : this._states[key].when(this._states[key].get()).collect();
+      this._states[key] = rstate[key];
+      return this.set(currentValue);
     }
 
     subscribe (callback) {

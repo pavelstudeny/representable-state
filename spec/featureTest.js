@@ -228,13 +228,19 @@ describe('RState', function () {
         });
 
         it('resets to a new value set', function () {
-            const s11 = defState(2, 4, 6, 8).withDefault(6).create(2);
+            const s11 = defState(2, 4, 6).withDefault(6).create(2);
             const s12 = defState(2, 4, 8).create(4);
-            const s2 = defState(1, 2, 3, 4).withDefault(3).create(2);
+            const s2 = defState(1, 2, 3, 4, 8).withDefault(3).create(2);
 
-            const intersection = intersectState({ s1: s11, s2 }).create();
+            const intersection = intersectState({ s1: s11, s2 }).withDefault(2).create();
+
+            intersection.set(8);
+            expect(intersection.get()).toBe(2);
+
             intersection.reset({ s1: s12 });
-            expect(intersection.get()).toBe(4);
+
+            intersection.set(8);
+            expect(intersection.get()).toBe(8);
         });
 
         it('emits changes', function () {
@@ -256,6 +262,26 @@ describe('RState', function () {
             intersection.set(2);
 
             expect(onChange.calls.count()).toBe(1);
+        });
+
+        it('keeps value on reset', function () {
+            const s11 = defState(2, 4, 6, 8).withDefault(6).create(2);
+            const s12 = defState(2, 4, 8).create(4);
+            const s2 = defState(1, 2, 3, 4).withDefault(3).create(2);
+
+            const intersection = intersectState({ s1: s11, s2 }).create();
+            intersection.reset({ s1: s12 });
+            expect(intersection.get()).toBe(2);
+        });
+
+        it('sets optional new value on reset', function () {
+            const s11 = defState(2, 4, 6).withDefault(6).create(2);
+            const s12 = defState(2, 4, 8).create(4);
+            const s2 = defState(1, 2, 3, 4, 8).withDefault(3).create(2);
+
+            const intersection = intersectState({ s1: s11, s2 }).create();
+            intersection.reset({ s1: s12 }, 8);
+            expect(intersection.get()).toBe(8);
         });
     });
 });
