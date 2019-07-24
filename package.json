@@ -19,5 +19,8 @@
   "bugs": {
     "url": "https://github.com/avast/representable-state/issues"
   },
-  "homepage": "https://github.com/avast/representable-state#readme"
+  "homepage": "https://github.com/avast/representable-state#readme",
+  "dependencies": {
+    "optional-js": "^2.1.1"
+  }
 }

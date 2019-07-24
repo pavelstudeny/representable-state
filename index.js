@@ -1,4 +1,5 @@
 const EventEmitter = require('events');
+const Optional = require('optional-js');
 
 class StateType {
   constructor(value) {
@@ -47,33 +48,11 @@ function defState(__enum__) {
     });
 
     if (typeIdx == -1) {
-      return {
-        get: function () {
-          throw new Error('No such type: ' + typeName(val));
-        },
-        then: function (f) {
-          return {
-            else: function (f) {
-              return f(typeName(val));
-            }
-          };
-        }
-      };
+      return Optional.empty();
     }
-
-    return {
-      get: function () {
-        return enums[typeIdx];
-      },
-      then: function (f) {
-        const val = f(enums[typeIdx]);
-        return {
-          else: function () {
-            return val;
-          }
-        };
-      }
-    };
+    else {
+      return Optional.of(enums[typeIdx]);
+    }
   }
 
   class RState {
@@ -119,7 +98,7 @@ function defState(__enum__) {
 
     set(val) {
       return getType(val)
-        .then(type => {
+        .ifPresentOrElse(type => {
           if (typeof this._state === 'undefined' && this._transitions && this._transitions.initial) {
             if (this._transitions.initial.indexOf(type) == -1) {
               if (!this._default || val === this._default) {
@@ -147,10 +126,10 @@ function defState(__enum__) {
 
           this._state = val;
           return this;
-        })
-        .else(name => {
+        },
+        () => {
           if (!this._default) {
-            throw new Error('Illegal argument: ' + name);
+            throw new Error('Illegal argument: ' + typeName(val));
           }
           return this.set(this._default);
         });
