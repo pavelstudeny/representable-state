@@ -88,6 +88,22 @@ describe('RState', function () {
         expect(function () { state.set(new ErrorState('loading failed')) }).toThrow();
     });
 
+    it('confirms allowed transition', function () {
+        const State = defState('loading', 'loaded')
+
+        let state = new State('loading');
+
+        expect(state.allowed('unloading')).toBe(false);
+    });
+
+    it('reports invalid transition', function () {
+        const State = defState('loading', 'loaded')
+
+        let state = new State('loading');
+
+        expect(state.allowed('loaded')).toBe(true);
+    });
+
     it('compares value', function () {
         class OKState extends StateType {}
         class ErrorState extends StateType {}
@@ -144,6 +160,20 @@ describe('RState', function () {
             expect(state.is('unloading')).toBe(true);
 
             expect(function () { state.set('loading') }).toThrow();
+        });
+
+        it('reports invalid transition if to an otherwise valid state', function () {
+            const State = defState('loading', 'loaded', 'unloading').transitions({
+                'loading': [ 'loaded' ],
+                'loaded': [ 'unloading' ]
+            });
+
+            let state = new State('loaded');
+
+            expect(state.allowed('unloading')).toBe(true);
+            state.set('unloading');
+
+            expect(state.allowed('loading')).toBe(false);
         });
 
         it('work for StateTypes', function () {
@@ -225,6 +255,14 @@ describe('RState', function () {
 
             const intersection = intersectState({ s1, s2 }).create(2);
             expect(intersection.get()).toBe(2);
+        });
+
+        it('reports invalid transitions if invalid for at least one substates', function () {
+            const s1 = defState(2, 4, 6, 8).create(6);
+            const s2 = defState(1, 2, 3, 4).create(1);
+
+            const intersection = intersectState({ s1, s2 }).create(2);
+            expect(intersection.allowed(3)).toBe(false);
         });
 
         it('resets to a new value set', function () {

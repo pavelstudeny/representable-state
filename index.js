@@ -96,6 +96,33 @@ function defState(__enum__) {
       });
     }
 
+    allowed(val) {
+      return getType(val)
+        .filter(type => {
+          if (typeof this._state === 'undefined' && this._transitions && this._transitions.initial) {
+            if (this._transitions.initial.indexOf(type) == -1) {
+              return false;
+            }
+          }
+          if (typeof this._state !== 'undefined' && this._transitions && this._transitions.map) {
+            let currentType = getType(this._state).get();
+            if (typeof currentType !== 'function') {
+              currentType = currentType.toString();
+            }
+            else {
+              currentType = currentType.name;
+            }
+
+            if (!this._transitions.map[currentType] || this._transitions.map[currentType].indexOf(type) == -1) {
+              return false;
+            }
+          }
+
+          return true;
+        })
+        .isPresent();
+    }
+
     set(val) {
       return getType(val)
         .ifPresentOrElse(type => {
@@ -116,7 +143,7 @@ function defState(__enum__) {
               currentType = currentType.name;
             }
 
-            if (this._transitions.map[currentType].indexOf(type) == -1) {
+            if (!this._transitions.map[currentType] || this._transitions.map[currentType].indexOf(type) == -1) {
               if (!this._default || val === this._default) {
                 throw new Error('Illegal transition: ' + typeName(this._state) + ' -> ' + typeName(val));
               }
@@ -181,6 +208,15 @@ function intersectState(statesMap) {
 
     get () {
       return this._states[this._first].get();
+    }
+
+    allowed (value) {
+      for (let key in this._states) {
+        if (!this._states[key].allowed(value)) {
+          return false;
+        }
+      }
+      return true;
     }
 
     set (value) {
